@@ -54,20 +54,13 @@ def obtainAdjacentRoute(route):
 
 def findShortestRoute(route):
     iterationCounter = 0
-    while iterationCounter < 2:
+    while iterationCounter < 5:
         adyacent = obtainAdjacentRoute(Route(data_Read()))
-        print(adyacent.getTotalDistance())
-        print(route.getTotalDistance())
         if adyacent.getTotalDistance() <= route.getTotalDistance():
             iterationCounter = 0
-            print(route.getCities())
-            print(adyacent.getCities())
             route.changingRoute(adyacent.getCities())
-            print(route.getCities())
         else:
             iterationCounter += 1
-        print(route.getCities())
-        print(route.getTotalDistance())
     return route
 
 
@@ -83,4 +76,6 @@ data_Read()
 route = Route(data_Read())
 routeaux = Route(data_Read())
 route2 = obtainAdjacentRoute(routeaux)
-findShortestRoute(route)
+result = findShortestRoute(route)
+print(result.getCities())
+print(result.getTotalDistance())
