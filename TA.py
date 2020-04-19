@@ -3,23 +3,23 @@ import random
 
 
 def pairDistance_Cities(coords):
-    matrix = {}
+    alldistanceGenerated = {}
     for i, (x1, y1) in enumerate(coords):
         for j, (x2, y2) in enumerate(coords):
             dx, dy = x1 - x2, y1 - y2
             dist = mx.sqrt(dx * dx + dy * dy)
-            matrix[i, j] = dist
-    return matrix
+            alldistanceGenerated[i, j] = dist
+    return alldistanceGenerated
 
 
-def total_Distance_Road(all_distance_generated, tour):
+def total_Distance_Road(pair_distance, tour):
     total = 0
     num_cities = len(tour)
     for i in range(num_cities):
         j = (i + 1) % num_cities
         city_i = tour[i]
         city_j = tour[j]
-        total += all_distance_generated[city_i, city_j]
+        total += pair_distance[city_i, city_j]
     return total
 
 
@@ -57,30 +57,27 @@ def shuffle_FirstRoute(route_Size):
     return route
 
 
-def HillClimbing_Algorithm(init_function, move_operator, objective_function, max_evaluations):
-    best = init_function
-    best_score = objective_function(best)
-
-    evaluations_count = 1
-
-    while evaluations_count < max_evaluations:
+def HillClimbing_Algorithm(first_Route, random_Routes, dataSolution_Route, maximum_Iteration):
+    topRoute = first_Route
+    best_score = dataSolution_Route(topRoute)
+    count = 1
+    while count < maximum_Iteration:
         move_made = False
-        for next in move_operator(best[1:len(best) - 1]):
-            if evaluations_count >= max_evaluations:
+        for childRoute in random_Routes(topRoute[1:len(topRoute) - 1]):
+            if count >= maximum_Iteration:
                 break
-
-            next_score = objective_function(next)
-            evaluations_count += 1
-            if next_score > best_score:
-                best = next
-                best_score = next_score
+            child_Score = dataSolution_Route(childRoute)
+            count += 1
+            if child_Score > best_score:
+                topRoute = childRoute
+                best_score = child_Score
                 move_made = True
                 break
 
         if not move_made:
             break
 
-    return evaluations_count, best_score, best
+    return count, best_score, topRoute
 
 
 def read_coords():
@@ -101,19 +98,19 @@ def read_coords():
 
 citiesName, coords = read_coords()
 
-all_distance_generated = pairDistance_Cities(coords)
+pair_distance = pairDistance_Cities(coords)
 first_Route = shuffle_FirstRoute(len(coords))
 print("Ruta generada: ")
 print(first_Route)
 for value in first_Route:
     print(citiesName[value])
-dataSolution_Route = lambda tour: -total_Distance_Road(all_distance_generated, tour)
+dataSolution_Route = lambda tour: -total_Distance_Road(pair_distance, tour)
 print("Distancia primera ruta generada: ")
-print(dataSolution_Route(first_Route))
+print(abs(dataSolution_Route(first_Route)))
 print("*****************************************************")
 evaluations_count, total_Distance_OptimalRoute, optimalRoute = HillClimbing_Algorithm(first_Route, generate_RandomRoutes, dataSolution_Route, 20)
 print("Distancia primera ruta generada: ")
-print(total_Distance_OptimalRoute)
+print(abs(total_Distance_OptimalRoute))
 print("Ruta generada: ")
 print(optimalRoute)
 for value in optimalRoute:
