@@ -115,3 +115,4 @@ print("Ruta generada: ")
 print(optimalRoute)
 for value in optimalRoute:
     print(citiesName[value])
+    print(coords[value])
