@@ -1,0 +1,6 @@
+San Isidro-3,6
+SanMiguel-0,4
+Magdalena-1,8
+Villa-2,1
+Los Olivos-4,1
+LaPerla-5,5

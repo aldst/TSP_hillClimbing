@@ -1,81 +1,120 @@
-import pandas as pd
-import networkx as nx
-import math
+import math as mx
 import random
 
 
-def calc_dist(city1, city2):
-    return math.sqrt((city2[1] - city1[1]) ** 2 + (city2[2] - city1[2]) ** 2)
+def pairDistance_Cities(coords):
+    matrix = {}
+    for i, (x1, y1) in enumerate(coords):
+        for j, (x2, y2) in enumerate(coords):
+            dx, dy = x1 - x2, y1 - y2
+            dist = mx.sqrt(dx * dx + dy * dy)
+            matrix[i, j] = dist
+    return matrix
 
 
-class Route:
-    cities = []
-
-    def __init__(self, cities):
-        self.cities = cities
-        listAux = cities[1:len(cities)]
-        random.shuffle(listAux)
-        cities[1:len(cities)] = listAux[0:len(cities)]
-
-    def changingRoute(self, citiesNew):
-        for index in range(len(citiesNew)):
-            self.cities[index] = citiesNew[index]
-
-    def getCities(self):
-        return self.cities
-
-    def swapCities(self, pos1, pos2):
-        aux = self.cities[pos1]
-        self.cities[pos1] = self.cities[pos2]
-        self.cities[pos2] = aux
-
-    def getTotalDistance(self):
-        citiesSize = len(self.cities)
-        totalDistance = 0
-        for index in range(citiesSize):
-            if index < citiesSize - 1:
-                totalDistance += calc_dist(self.cities[index], self.cities[index + 1])
-        totalDistance += calc_dist(self.cities[citiesSize - 1], self.cities[0])
-        return totalDistance
+def total_Distance_Road(all_distance_generated, tour):
+    total = 0
+    num_cities = len(tour)
+    for i in range(num_cities):
+        j = (i + 1) % num_cities
+        city_i = tour[i]
+        city_j = tour[j]
+        total += all_distance_generated[city_i, city_j]
+    return total
 
 
-def obtainAdjacentRoute(route):
-    x1 = 0
-    x2 = 0
-    while x1 == x2:
-        x1 = int(len(route.getCities()) * random.uniform(0, 1))
-        x2 = int(len(route.getCities()) * random.uniform(0, 1))
-        if x1 == 0 or x2 == 0:
-            x1 = 0
-            x2 = 0
-    route.swapCities(x1, x2)
+def all_pairs(size, shuffle=random.shuffle):
+    r1 = [*range(size)]
+    r2 = [*range(size)]
+    if shuffle:
+        shuffle(r1)
+        shuffle(r2)
+    for i in r1:
+        for j in r2:
+            yield i, j
+
+
+def generate_RandomRoutes(route):
+    for i, j in all_pairs(len(route)):
+        if i != j:
+            randomRoute = route[:]
+            if i < j:
+                randomRoute[i:j + 1] = reversed(route[i:j + 1])
+            else:
+                randomRoute[i + 1:] = reversed(route[:j])
+                randomRoute[:j] = reversed(route[i + 1:])
+            if randomRoute != route:
+                randomRoute.insert(0, 0)
+                randomRoute += [0]
+                yield randomRoute
+
+
+def shuffle_FirstRoute(route_Size):
+    route = [*range(1, route_Size)]
+    random.shuffle(route)
+    route.insert(0, 0)
+    route.append(0)
     return route
 
 
-def findShortestRoute(route):
-    iterationCounter = 0
-    while iterationCounter < 5:
-        adyacent = obtainAdjacentRoute(Route(data_Read()))
-        if adyacent.getTotalDistance() <= route.getTotalDistance():
-            iterationCounter = 0
-            route.changingRoute(adyacent.getCities())
-        else:
-            iterationCounter += 1
-    return route
+def HillClimbing_Algorithm(init_function, move_operator, objective_function, max_evaluations):
+    best = init_function
+    best_score = objective_function(best)
+
+    evaluations_count = 1
+
+    while evaluations_count < max_evaluations:
+        move_made = False
+        for next in move_operator(best[1:len(best) - 1]):
+            if evaluations_count >= max_evaluations:
+                break
+
+            next_score = objective_function(next)
+            evaluations_count += 1
+            if next_score > best_score:
+                best = next
+                best_score = next_score
+                move_made = True
+                break
+
+        if not move_made:
+            break
+
+    return evaluations_count, best_score, best
 
 
-def data_Read():
-    excel_file = 'ciudades.xlsx'
-    data = pd.read_excel(excel_file)
-    cities = list(data.set_index('CODIGO').values)
+def read_coords():
+    coord_file = open("infoCities.txt", "r")
+    citiesName = []
+    coords = []
+    for line in coord_file:
+        x = line.split("-")
+        a = x[0]
+        b = x[1]
+        aux = b.strip().split(",")
+        x = aux[0]
+        y = aux[1]
+        coords.append((float(x), float(y)))
+        citiesName.append(a)
+    return citiesName, coords
 
-    return cities
 
+citiesName, coords = read_coords()
 
-data_Read()
-route = Route(data_Read())
-routeaux = Route(data_Read())
-route2 = obtainAdjacentRoute(routeaux)
-result = findShortestRoute(route)
-print(result.getCities())
-print(result.getTotalDistance())
+all_distance_generated = pairDistance_Cities(coords)
+first_Route = shuffle_FirstRoute(len(coords))
+print("Ruta generada: ")
+print(first_Route)
+for value in first_Route:
+    print(citiesName[value])
+dataSolution_Route = lambda tour: -total_Distance_Road(all_distance_generated, tour)
+print("Distancia primera ruta generada: ")
+print(dataSolution_Route(first_Route))
+print("*****************************************************")
+evaluations_count, total_Distance_OptimalRoute, optimalRoute = HillClimbing_Algorithm(first_Route, generate_RandomRoutes, dataSolution_Route, 20)
+print("Distancia primera ruta generada: ")
+print(total_Distance_OptimalRoute)
+print("Ruta generada: ")
+print(optimalRoute)
+for value in optimalRoute:
+    print(citiesName[value])
